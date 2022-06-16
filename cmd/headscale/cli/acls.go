@@ -3,6 +3,8 @@ package cli
 import (
 	"fmt"
 	
+	// "github.com/juanfont/headscale"
+	v1 "github.com/juanfont/headscale/gen/go/headscale/v1"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +29,14 @@ var listAclsCmd = &cobra.Command{
 		if output == `` {
 			output = `json`
 		}
-		h, err := getHeadscaleApp()
+		
+		ctx, client, conn, cancel := getHeadscaleCLIClient()
+		defer cancel()
+		defer conn.Close()
+
+		request := &v1.ListACLPolicyRequest{}
+
+		response, err := client.ListACLPolicy(ctx, request)
 		if err != nil {
 			ErrorOutput(
 				err,
@@ -37,8 +46,8 @@ var listAclsCmd = &cobra.Command{
 
 			return
 		}
-		policy := h.GetACLPolicy()
-		if policy == nil {
+		
+		if response == nil {
 			SuccessOutput(
 				``,
 				`No policy defined.`,
@@ -49,7 +58,7 @@ var listAclsCmd = &cobra.Command{
 		} 
 
 		SuccessOutput(
-			policy,
+			response,
 			``,
 			output,
 		)

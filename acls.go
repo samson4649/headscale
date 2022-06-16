@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	v1 "github.com/juanfont/headscale/gen/go/headscale/v1"
 	"github.com/rs/zerolog/log"
 	"github.com/tailscale/hujson"
 	"gopkg.in/yaml.v3"
@@ -102,6 +103,80 @@ func (h *Headscale) UpdateACLRules() error {
 	h.aclRules = rules
 
 	return nil
+}
+
+func (h *Headscale) ListACLPolicy() (*ACLPolicy, error) {
+	return h.aclPolicy, nil
+}
+
+func (policy *ACLPolicy) toProto() *v1.ACLPolicy {
+	protoACLPolicy := v1.ACLPolicy{
+		Groups: policy.Groups.toProto(),
+		Hosts:  policy.Hosts.toProto(),
+		TagOwners: policy.TagOwners.toProto(),
+	}
+
+	// proto acls
+	protoACLPolicy.Acl = make([]*v1.ACL, len(policy.ACLs))
+	for k,v := range policy.ACLs {
+		protoACLPolicy.Acl[k] = v.toProto()		
+	}
+
+	// proto acl tests
+	protoACLPolicy.AclTest = make([]*v1.ACLTest, len(policy.Tests))
+	for k,v := range policy.Tests {
+		protoACLPolicy.AclTest[k] = v.toProto()		
+	}
+
+	return &protoACLPolicy
+}
+
+func (a *ACL) toProto() *v1.ACL {
+	protoACL := v1.ACL{
+		Action: a.Action,
+		Users:  a.Users,
+		Ports:  a.Ports,
+	}
+	return &protoACL 
+}
+
+func (a *ACLTest) toProto() *v1.ACLTest {
+	protoACLTest := v1.ACLTest{
+		User:  a.User,
+		Allow: a.Allow,
+		Deny:  a.Deny,
+	}
+	return &protoACLTest 
+}
+
+func (g *Groups) toProto() map[string]*v1.Group {
+	protoGroups := make(map[string]*v1.Group, len(*g))
+	for k,v := range *g {
+		protoGroupSingle := &v1.Group{
+			Group: v,
+		}
+		protoGroups[k] = protoGroupSingle
+	}
+	return protoGroups
+}
+
+func (t *TagOwners) toProto() map[string]*v1.TagOwners {
+	protoTagOwners := make(map[string]*v1.TagOwners, len(*t))
+	for k,v := range *t {
+		protoTagOwner := &v1.TagOwners{
+			TagOwners: v,
+		}
+		protoTagOwners[k] = protoTagOwner
+	}
+	return protoTagOwners
+}
+
+func (h *Hosts) toProto() map[string]string {
+	protoHosts := make(map[string]string, len(*h))
+	for k,v := range *h {
+		protoHosts[k] = v.String()
+	}
+	return protoHosts
 }
 
 func (h *Headscale) generateACLRules() ([]tailcfg.FilterRule, error) {

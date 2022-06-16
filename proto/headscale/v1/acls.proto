@@ -1,0 +1,38 @@
+syntax = "proto3";
+package headscale.v1;
+option  go_package = "github.com/juanfont/headscale/gen/go/v1";
+
+message ACLPolicy {
+    map<string,Group> Groups = 1;
+    map<string,string>  Hosts  = 2; 
+    map<string,TagOwners> TagOwners = 3;
+    repeated ACL Acl = 4;
+    repeated ACLTest AclTest = 5;
+}
+
+message Group {
+    repeated string Group = 1;
+}
+
+message TagOwners {
+    repeated string TagOwners = 1;
+}
+
+message ACL {
+    string Action = 1;
+    repeated string Users = 2;
+    repeated string Ports = 3;
+}
+
+message ACLTest {
+    string User = 1;
+    repeated string Allow = 2;
+    repeated string Deny = 3;
+}
+
+message ListACLPolicyRequest {
+}
+
+message ListACLPolicyResponse {
+    ACLPolicy Policy = 1;
+}
